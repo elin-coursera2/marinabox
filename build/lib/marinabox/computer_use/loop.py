@@ -26,7 +26,13 @@ from anthropic.types.beta import (
     BetaTextBlock,
     BetaTextBlockParam,
     BetaToolResultBlockParam,
+    BetaToolUseBlock,
     BetaToolUseBlockParam,
+    BetaThinkingConfigEnabledParam,
+    BetaThinkingBlock,
+    BetaThinkingBlockParam,
+    BetaRedactedThinkingBlock,
+    BetaRedactedThinkingBlockParam
 )
 
 from .tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
@@ -138,6 +144,7 @@ async def sampling_loop(
                 system=[system],
                 tools=tools.to_params(),
                 betas=betas,
+                thinking=BetaThinkingConfigEnabledParam(type='enabled', budget_tokens=1024)
             )
         except (APIStatusError, APIResponseValidationError) as e:
             api_response_callback(e.request, e.response, e)
@@ -235,13 +242,17 @@ def _maybe_filter_to_n_most_recent_images(
 
 def _response_to_params(
     response: BetaMessage,
-) -> list[BetaTextBlockParam | BetaToolUseBlockParam]:
-    res: list[BetaTextBlockParam | BetaToolUseBlockParam] = []
+) -> list[BetaTextBlockParam | BetaToolUseBlockParam | BetaThinkingBlockParam | BetaRedactedThinkingBlockParam]:
+    res: list[BetaTextBlockParam | BetaToolUseBlockParam | BetaThinkingBlockParam | BetaRedactedThinkingBlockParam] = []
     for block in response.content:
         if isinstance(block, BetaTextBlock):
             res.append({"type": "text", "text": block.text})
-        else:
+        elif isinstance(block, BetaToolUseBlock):
             res.append(cast(BetaToolUseBlockParam, block.model_dump()))
+        elif isinstance(block, BetaThinkingBlock):
+            res.append(cast(BetaThinkingBlockParam, block.model_dump()))
+        elif isinstance(block, BetaRedactedThinkingBlock):
+            res.append(cast(BetaRedactedThinkingBlockParam, block.model_dump()))
     return res
 
 
