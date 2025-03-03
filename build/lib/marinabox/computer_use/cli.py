@@ -40,7 +40,7 @@ async def main(prompt: str, aws_access_key_id: str, aws_secret_access_key: str, 
     tools = ToolCollection(computer_tool, bash_tool, edit_tool)
 
     messages = await sampling_loop(
-        model="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+        model="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
         provider="bedrock",
         system_prompt_suffix="",
         messages=messages,
